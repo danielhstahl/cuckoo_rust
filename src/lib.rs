@@ -71,36 +71,9 @@ fn get_new_nests(
     (0..n).map(|_|get_new_paramater_and_fn(ul, &obj_fn, &uniform_rand_generator)).collect()
 }
 
-/**void getCuckoos(
-        Nest* newNest, const Nest& nest, 
-        const BestParameter& bP,
-        const ObjFun& objFun,
-        const Array& ul, 
-        const U& lambda, 
-        const Unif& unif,
-        const Norm& norm
-    ){
-        int n=nest.size(); //num nests
-        int m=nest[0].first.size(); //num parameters
-        Nest& nestRef= *newNest;
-        for(int i=0; i<n;++i){
-            for(int j=0; j<m; ++j){
-                nestRef[i].first[j]=swarm_utils::getTruncatedParameter(
-                    ul[j].lower, ul[j].upper, 
-                    swarm_utils::getLevyFlight(
-                        nest[i].first[j], 
-                        getStepSize(nest[i].first[j], bP[j], ul[j].lower, ul[j].upper), 
-                        lambda, unif(), norm()
-                    )
-                );
-            }
-            nestRef[i].second=objFun(nestRef[i].first);
-        }
-    }*/
-
 fn get_cuckoos(
     new_nest:&Vec<(Vec<f64>, f64)>,
-    curr_nest:&Vec<(Vec<f64>, f64)>,
+    curr_nest:&Vec<(Vec<f64>, f64)>, //see if can move for efficiency (return self)
     best_parameters:&Vec<f64>,
     obj_fn:impl Fn(&Vec<f64>)->f64,
     ul:&Vec<upper_lower>,
@@ -126,6 +99,99 @@ fn get_cuckoos(
         (new_nest_parameters, new_nest_fn)
     }).collect()
 }
+
+fn get_pa(
+    p_min:f64,
+    p_max:f64,
+    index:usize,
+    n:usize
+)->f64{
+    p_max-(p_max-p_min)*(index as f64)/(n as f64)
+}
+
+fn empty_nests(
+    new_nest:Vec<(Vec<f64>, f64)>, //move this for efficiency (can return self)
+    obj_fn:&impl Fn(&Vec<f64>)->f64,
+    uniform_rand_generator:&impl Fn()->f64,
+    ul:&Vec<upper_lower>,
+    p:f64
+)->Vec<(Vec<f64>, f64)>{
+    let n=new_nest.len();
+    let num_to_keep=((n as f64)*p) as usize;
+    let start_num=n-num_to_keep;
+    new_nest.into_iter().enumerate().map(|(index, v)|{
+        if index<start_num {v} else {get_new_paramater_and_fn(ul, &obj_fn, &uniform_rand_generator)}
+    }).collect()
+}
+
+pub fn optimize(
+    obj_fn:&impl Fn(&Vec<f64>)->f64,
+    ul:&Vec<upper_lower>,
+    n:usize,
+    total_mc:usize,
+    tol:f64,
+    seed:usize
+)->(Vec<f64>, f64){
+    let normal = Normal::new(0.0, 1.0);
+    let normal_rand_generator=||normal.sample(&mut rand::thread_rng());
+    let uniform_rand_generator=||rng.gen();
+    //let v = normal.sample(&mut rand::thread_rng());
+}
+
+/** template< typename Array, typename ObjFn>
+    auto optimize(const ObjFn& objFn, const Array& ul, int n, int totalMC, double tol, int seed){
+        int numParams=ul.size();
+        srand(seed);
+        SimulateNorm norm(seed);
+        auto unifL=[](){return swarm_utils::getUniform();};
+        auto normL=[&](){return norm.getNorm();};
+        auto nest=getNewNest(ul, objFn,normL, n);
+        double lambda=1.5;
+        double pMin=.05;
+        double pMax=.5;
+        
+        double fMin=2;
+        int i=0;
+
+        sortNest(nest);
+        auto newNest=getNewNest(ul, objFn,normL, n);
+       
+       
+        while(i<totalMC&&fMin>tol){
+            /**Completely overwrites newNest*/
+            //newNest now has the previous values from nest with levy flights added
+            getCuckoos(
+                &newNest, 
+                nest, nest[0].first, //the current best nest
+                objFn, ul, 
+                lambda, 
+                unifL, 
+                normL
+            );
+            //compare previous nests with cuckoo nests and sort results
+            //nest now has the best of nest and newNest
+            getBestNest(
+                &nest, 
+                newNest
+            );
+            //remove bottom "p" nests and resimulate.
+            emptyNests(&nest, objFn, normL, ul, getPA(pMin, pMax, i, totalMC));
+            sortNest(nest);
+            fMin=nest[0].second;
+
+            #ifdef VERBOSE_FLAG
+                std::cout<<"Index: "<<i<<", Param Vals: ";
+                for(auto& v:nest[0].first){
+                    std::cout<<v<<", ";
+                }
+                std::cout<<", Obj Val: "<<fMin<<std::endl;
+            #endif
+            ++i;
+        }
+        return nest[0];
+} */
+
+
 //    let normal = Normal::new(0.0, 1.0);
 //let v = normal.sample(&mut rand::thread_rng());
 
