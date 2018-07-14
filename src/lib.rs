@@ -1,6 +1,5 @@
 extern crate rand;
 extern crate byteorder;
-use byteorder::{LittleEndian, WriteBytesExt};
 
 
 use rand::{thread_rng, ThreadRng, SeedableRng, Rng, StdRng};
@@ -12,7 +11,7 @@ use rand::distributions::{Distribution};
 #[cfg(test)]
 extern crate approx;
 
-pub struct Upper_lower {
+pub struct UpperLower {
     lower: f64,
     upper: f64,
 }
@@ -49,7 +48,7 @@ fn get_truncated_parameter(
 }
 
 fn get_random_parameters<T, U>(
-    ul:&Vec<Upper_lower>,
+    ul:&Vec<UpperLower>,
     rng:&mut T,
     rand:&mut U
 )->Vec<f64>
@@ -61,7 +60,7 @@ fn get_random_parameters<T, U>(
 }
 
 fn get_new_parameter_and_fn<T, U, S>(
-    ul:&Vec<Upper_lower>,
+    ul:&Vec<UpperLower>,
     obj_fn:S,
     rng:&mut T,
     rand:&mut U
@@ -76,13 +75,13 @@ fn get_new_parameter_and_fn<T, U, S>(
     (parameters, fn_value_at_parameters)
 }
 
-static step_increment:f64=0.01;
+static STEP_INCREMENT:f64=0.01;
 fn get_step_size(curr:f64, best:f64, lower:f64, upper:f64)->f64{
-    step_increment*(upper-lower)*(curr-best)
+    STEP_INCREMENT*(upper-lower)*(curr-best)
 }
 
 fn get_new_nest<T, U, S>(
-    ul:&Vec<Upper_lower>, 
+    ul:&Vec<UpperLower>, 
     obj_fn:S,
     n:usize,
     rng:&mut T,
@@ -106,12 +105,12 @@ fn get_best_nest(
     new_nest:&Vec<(Vec<f64>, f64)>,
     curr_nest:&mut Vec<(Vec<f64>, f64)>//move curr_nest
 ){
-    curr_nest.iter_mut().zip(new_nest.iter()).for_each(|(mut curr_val, new_val)|{
+    curr_nest.iter_mut().zip(new_nest.iter()).for_each(|(curr_val, new_val)|{
         let (curr_params, curr_fn_val)=curr_val;
         let (new_params, new_fn_val)=new_val;
         if new_fn_val< curr_fn_val { 
-            curr_params=new_params.iter().map(|v|*v).collect();
-            curr_fn_val=new_fn_val;
+            *curr_params=new_params.to_vec();
+            *curr_fn_val=*new_fn_val;
         } 
     });
     sort_nest(curr_nest);
@@ -121,7 +120,7 @@ fn get_cuckoos<T, G, U>(
     new_nest:&mut Vec<(Vec<f64>, f64)>, 
     curr_nest:&Vec<(Vec<f64>, f64)>,
     best_parameters:&Vec<f64>,
-    ul:&Vec<Upper_lower>,
+    ul:&Vec<UpperLower>,
     obj_fn:impl Fn(&Vec<f64>)->f64,
     lambda:f64,
     rng:&mut T,
@@ -135,10 +134,10 @@ fn get_cuckoos<T, G, U>(
 {
     new_nest.iter_mut()
         .zip(curr_nest.iter())
-        .for_each(|(&mut new_val, curr_val)|{
+        .for_each(|(new_val, curr_val)|{
             let (new_parameters, new_fn_val)=new_val;
             let (curr_parameters,_)=curr_val;
-            new_parameters=curr_parameters.iter()
+            *new_parameters=curr_parameters.iter()
                 .zip(ul.iter())
                 .zip(best_parameters.iter())
                 .map(|((curr_param, v), bp)|{
@@ -154,7 +153,7 @@ fn get_cuckoos<T, G, U>(
                     )
                 }).collect();
             
-            new_fn_val=obj_fn(&new_parameters);
+            *new_fn_val=obj_fn(&new_parameters);
             //(new_nest_parameters, new_nest_fn)
         });//.collect()
 }
@@ -171,7 +170,7 @@ fn get_pa(
 fn empty_nests<T, U>(
     new_nest:&mut Vec<(Vec<f64>, f64)>, //
     obj_fn:&impl Fn(&Vec<f64>)->f64,
-    ul:&Vec<Upper_lower>,
+    ul:&Vec<UpperLower>,
     p:f64,
     rng:&mut T,
     rand:&mut U
@@ -183,24 +182,15 @@ fn empty_nests<T, U>(
     let n=new_nest.len();
     let num_to_keep=((n as f64)*p) as usize;
     let start_num=n-num_to_keep;
-    new_nest.iter_mut().enumerate().for_each(|(index, &mut new_val)|{
-        //let (new_parameters, new_fn_val)=new_val;
+    new_nest.iter_mut().enumerate().for_each(|(index, new_val)|{
         if index>=start_num {
-            new_val=get_new_parameter_and_fn(ul, &obj_fn, rng, rand);
+            *new_val=get_new_parameter_and_fn(ul, &obj_fn, rng, rand);
         }
     });
 }
 
-pub fn get_rng_seed(seed:i32)->StdRng{
-    let mut wtr = vec![];
-    wtr.write_i32::<LittleEndian>(seed).unwrap();
-
-    let mut array = [0; 32];
-    let bytes = &wtr[..array.len()]; // panics if not enough data
-    array.copy_from_slice(bytes);
-
-
-    SeedableRng::from_seed(array) 
+pub fn get_rng_seed(seed:[u8; 32])->StdRng{
+    SeedableRng::from_seed(seed) 
 }
 
 pub fn get_rng_system_seed()->ThreadRng{
@@ -209,7 +199,7 @@ pub fn get_rng_system_seed()->ThreadRng{
 
 pub fn optimize<T>(
     obj_fn:&impl Fn(&Vec<f64>)->f64,
-    ul:&Vec<Upper_lower>,
+    ul:&Vec<UpperLower>,
     n:usize,
     total_mc:usize,
     tol:f64,
@@ -226,18 +216,18 @@ pub fn optimize<T>(
     let mut rng=rng_inst();
     let mut normal=StandardNormal;
     let mut uniform=Uniform::new(0.0f64, 1.0);
+
+    //starting nests
     let mut curr_nest=get_new_nest(&ul, &obj_fn, n, &mut rng, &mut normal);
     sort_nest(&mut curr_nest);
-
     let mut new_nest=get_new_nest(&ul, &obj_fn, n, &mut rng, &mut normal);
 
-    let mut done = false; // mut done: bool
     let mut index=0;
-    while !done {
-        let (curr_best_params, _)=curr_nest.first().unwrap();
+    loop {
         get_cuckoos(
             &mut new_nest, &curr_nest, 
-            &curr_best_params, &ul, 
+            &curr_nest.first().unwrap().0, //currently best parameters 
+            &ul, 
             &obj_fn, lambda, 
             &mut rng, &mut uniform, &mut normal
         );
@@ -250,12 +240,11 @@ pub fn optimize<T>(
             &mut normal
         );
         sort_nest(&mut new_nest);
-
-        let (_, fn_min)=curr_nest.first().unwrap();
         index=index+1;
-        done=index>=total_mc || fn_min<=&tol; 
+        if index>=total_mc || curr_nest.first().unwrap().1<=tol {break;}
     }
-    *curr_nest.first().unwrap()
+    let (optim_parameters, optim_fn_val)=curr_nest.first().unwrap();
+    (optim_parameters.to_vec(), *optim_fn_val)
 }
 
 
@@ -264,10 +253,13 @@ mod tests {
     use super::*;
     #[test]
     fn simple_fn_optim() {
-        let seed: &[_] = &[1, 2, 3, 4];
-        let bounds:Upper_lower=Upper_lower{ lower:-4.0, upper:4.0};
-        let ul=vec![bounds; 4];
-        let (result, fn_val)=optimize(|&inputs|{
+        let seed:[u8; 32]=[0; 32];
+        let mut ul=vec![];
+        ul.push(UpperLower{ lower:-4.0, upper:4.0});
+        ul.push(UpperLower{ lower:-4.0, upper:4.0});
+        ul.push(UpperLower{ lower:-4.0, upper:4.0});
+        ul.push(UpperLower{ lower:-4.0, upper:4.0});
+        let (result, fn_val)=optimize(&|inputs:&Vec<f64>|{
             inputs[0].powi(2)+inputs[1].powi(2)+inputs[2].powi(2)+inputs[3].powi(2)
         }, &ul, 25, 1000, 0.00000001, || get_rng_seed(seed));
         for res in result.iter(){
