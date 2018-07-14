@@ -163,14 +163,20 @@ fn empty_nests<'a, T>(
     }).collect()
 }
 
-fn get_rng_seed(seed:&[u8;32])->StdRng{
-    let mut rng: StdRng = SeedableRng::from_seed(*seed); 
-    rng
+pub fn get_rng_seed(seed:i32)->StdRng{
+    let mut wtr = vec![];
+    wtr.write_i32::<LittleEndian>(seed).unwrap();
+
+    let mut array = [0; 32];
+    let bytes = &wtr[..array.len()]; // panics if not enough data
+    array.copy_from_slice(bytes);
+
+
+    SeedableRng::from_seed(array) 
 }
 
 fn get_rng_system_seed()->ThreadRng{
-    let mut rng: ThreadRng=thread_rng();
-    rng
+    thread_rng()
 }
 
 pub fn optimize<T>(

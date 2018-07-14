@@ -10,6 +10,7 @@ license = "MIT"
 [dependencies]
 rand = "0.5"
 approx = "0.2.0"
+byteorder = "1.2.3"
 
 [badges]
 travis-ci = { repository = "phillyfan1138/cuckoo_rust" }
