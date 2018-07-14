@@ -180,10 +180,8 @@ fn empty_nests<T, U>(
     let n=new_nest.len();
     let num_to_keep=((n as f64)*p) as usize;
     let start_num=n-num_to_keep;
-    new_nest.iter_mut().enumerate().for_each(|(index, new_val)|{
-        if index>=start_num {
-            *new_val=get_new_parameter_and_fn(ul, &obj_fn, rng, rand);
-        }
+    new_nest.iter_mut().enumerate().filter(|(index, _)|index>=&start_num).for_each(|(_, new_val)|{
+        *new_val=get_new_parameter_and_fn(ul, &obj_fn, rng, rand);
     });
 }
 
@@ -231,14 +229,22 @@ pub fn optimize<T>(
         );
         get_best_nest(&new_nest, &mut curr_nest);
         empty_nests(
-            &mut new_nest, 
+            &mut curr_nest, 
             &obj_fn, &ul,
             get_pa(p_min, p_max, index, total_mc),
             &mut rng,
             &mut normal
         );
-        sort_nest(&mut new_nest);
+        sort_nest(&mut curr_nest);
         index=index+1;
+        
+        if cfg!(feature="VERBOSE_FLAG") {
+            print!("Index: {}, Param Vals: ", index);
+            for val in curr_nest[0].0.iter(){
+                print!("{}", val);
+            }
+            println!("Objective Value: {}", curr_nest[0].1);
+        }
         if index>=total_mc || curr_nest.first().unwrap().1<=tol {break;}
     }
     let (optim_parameters, optim_fn_val)=curr_nest.first().unwrap();
@@ -249,6 +255,19 @@ pub fn optimize<T>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn sort_algorithm(){
+        let mut vec_to_sort:Vec<(Vec<f64>, f64)>=vec![];
+        vec_to_sort.push((vec![1.0], 3.0));
+        vec_to_sort.push((vec![1.0], 2.0));
+        vec_to_sort.push((vec![1.0], 5.0));
+        sort_nest(&mut vec_to_sort);
+        let expected:Vec<f64>=vec![2.0, 3.0, 5.0];
+        for (val, expected) in vec_to_sort.iter().zip(expected.iter()){
+            let (_, v)=*val;
+            assert_eq!(v, *expected);
+        }
+    }
     #[test]
     fn simple_fn_optim() {
         let seed:[u8; 32]=[0; 32];

@@ -14,3 +14,7 @@ byteorder = "1.2.3"
 
 [badges]
 travis-ci = { repository = "phillyfan1138/cuckoo_rust" }
+
+[features]
+default = []
+VERBOSE_FLAG=[]
