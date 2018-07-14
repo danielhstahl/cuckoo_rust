@@ -1,7 +1,4 @@
 extern crate rand;
-extern crate byteorder;
-
-
 use rand::{thread_rng, ThreadRng, SeedableRng, Rng, StdRng};
 use rand::distributions::Uniform;
 use rand::distributions::StandardNormal;
@@ -10,6 +7,8 @@ use rand::distributions::{Distribution};
 #[macro_use]
 #[cfg(test)]
 extern crate approx;
+#[cfg(test)]
+use std::f64::consts::PI;
 
 pub struct UpperLower {
     lower: f64,
@@ -263,8 +262,72 @@ mod tests {
             inputs[0].powi(2)+inputs[1].powi(2)+inputs[2].powi(2)+inputs[3].powi(2)
         }, &ul, 25, 1000, 0.00000001, || get_rng_seed(seed));
         for res in result.iter(){
-            assert_abs_diff_eq!(*res, 0.0, epsilon=0.00001);
+            assert_abs_diff_eq!(*res, 0.0, epsilon=0.001);
         }
-        
+        assert_abs_diff_eq!(fn_val, 0.0, epsilon=0.00001);
     }
+    #[test]
+    fn test_rosenbrok_function(){
+        let seed:[u8; 32]=[0; 32];
+        let mut ul=vec![];
+        ul.push(UpperLower{ lower:-4.0, upper:4.0});
+        ul.push(UpperLower{ lower:-4.0, upper:4.0});
+        let (result, fn_val)=optimize(&|inputs:&Vec<f64>|{
+            (1.0-inputs[0]).powi(2)+100.0*(inputs[1]-inputs[0].powi(2)).powi(2)
+        }, &ul, 20, 10000, 0.00000001, || get_rng_seed(seed));
+        for res in result.iter(){
+            assert_abs_diff_eq!(*res, 1.0, epsilon=0.001);
+        }
+        assert_abs_diff_eq!(fn_val, 0.0, epsilon=0.00001);
+    }
+    #[test]
+    fn test_u_2_function(){ //16 parameters
+        let seed:[u8; 32]=[0; 32];
+        let mut ul=vec![];
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        ul.push(UpperLower{ lower:-5.0, upper:5.0});
+        let (result, fn_val)=optimize(&|inputs:&Vec<f64>|{
+            inputs.iter().fold(0.0, |accum, curr|accum+(curr-1.0).powi(2))
+        }, &ul, 25, 25000, 0.00000001, || get_rng_seed(seed));
+        for res in result.iter(){
+            assert_abs_diff_eq!(*res, 1.0, epsilon=0.001);
+        }
+        assert_abs_diff_eq!(fn_val, 0.0, epsilon=0.00001);
+    }
+    #[test]
+    fn test_rastigrin_function(){
+        let seed:[u8; 32]=[0; 32];
+        let mut ul=vec![];
+        ul.push(UpperLower{ lower:-4.0, upper:4.0});
+        ul.push(UpperLower{ lower:-4.0, upper:4.0});
+        ul.push(UpperLower{ lower:-4.0, upper:4.0});
+        ul.push(UpperLower{ lower:-4.0, upper:4.0});
+        ul.push(UpperLower{ lower:-4.0, upper:4.0});
+        let rastigrin_scale=10.0;
+        let (result, fn_val)=optimize(&|inputs:&Vec<f64>|{
+            rastigrin_scale*(inputs.len() as f64)+inputs.iter().fold(
+                0.0, |accum, curr|accum+curr.powi(2)-rastigrin_scale*(2.0*PI*curr).cos()
+            )
+        }, &ul, 25, 25000, 0.00000001, || get_rng_seed(seed));
+        for res in result.iter(){
+            assert_abs_diff_eq!(*res, 0.0, epsilon=0.001);
+        }
+        assert_abs_diff_eq!(fn_val, 0.0, epsilon=0.00001);
+    }
+
+
 }
