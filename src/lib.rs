@@ -4,7 +4,7 @@ use rand::prelude::*;
 use rand::{thread_rng, SeedableRng, Rng, StdRng};
 use rand::distributions::Normal;
 
-struct upper_lower {
+struct Upper_lower {
     lower: f64,
     upper: f64,
 }
@@ -41,14 +41,14 @@ fn get_truncated_parameter(
 }
 
 fn get_random_parameters(
-    ul:&Vec<upper_lower>,
+    ul:&Vec<Upper_lower>,
     rand_generator:impl Fn()->f64
 )->Vec<f64>{
     ul.iter().map(|v|get_random_parameter(v.lower, v.upper, rand_generator())).collect()
 }
 
 fn get_new_paramater_and_fn(
-    ul:&Vec<upper_lower>,
+    ul:&Vec<Upper_lower>,
     obj_fn:&impl Fn(&Vec<f64>)->f64,
     rand_generator:&impl Fn()->f64
 )->(Vec<f64>, f64) {
@@ -63,7 +63,7 @@ fn get_step_size(curr:f64, best:f64, lower:f64, upper:f64)->f64{
 }
 
 fn get_new_nest(
-    ul:&Vec<upper_lower>, 
+    ul:&Vec<Upper_lower>, 
     obj_fn:&impl Fn(&Vec<f64>)->f64,
     rand_generator:&impl Fn()->f64,
     n:usize
@@ -93,7 +93,7 @@ fn get_cuckoos(
     new_nest:Vec<(Vec<f64>, f64)>, //move for efficiency (return self)
     curr_nest:&Vec<(Vec<f64>, f64)>,
     best_parameters:&Vec<f64>,
-    ul:&Vec<upper_lower>,
+    ul:&Vec<Upper_lower>,
     obj_fn:impl Fn(&Vec<f64>)->f64,
     lambda:f64,
     uniform_rand_generator:impl Fn()->f64,
@@ -137,7 +137,7 @@ fn empty_nests(
     new_nest:Vec<(Vec<f64>, f64)>, //move this for efficiency (can return self)
     obj_fn:&impl Fn(&Vec<f64>)->f64,
     uniform_rand_generator:&impl Fn()->f64,
-    ul:&Vec<upper_lower>,
+    ul:&Vec<Upper_lower>,
     p:f64
 )->Vec<(Vec<f64>, f64)>{
     let n=new_nest.len();
@@ -160,7 +160,7 @@ fn get_rng_system_seed()->StdRng{
 
 pub fn optimize(
     obj_fn:&impl Fn(&Vec<f64>)->f64,
-    ul:&Vec<upper_lower>,
+    ul:&Vec<Upper_lower>,
     n:usize,
     total_mc:usize,
     tol:f64,
@@ -211,17 +211,17 @@ mod tests {
     #[test]
     fn simple_fn_optim() {
         let seed: &[_] = &[1, 2, 3, 4];
-        let bounds:upper_lower=upper_lower{-4.0, 4.0};
+        let bounds:Upper_lower=Upper_lower{ lower:-4.0, upper:4.0};
         let ul=vec![4, bounds];
-        
+
         assert_eq!(2 + 2, 4);
     }
 }
 
 /**
 TEST_CASE("Test Simple Function", "[Cuckoo]"){
-    std::vector<swarm_utils::upper_lower<double> > ul;
-    swarm_utils::upper_lower<double> bounds={-4.0, 4.0};
+    std::vector<swarm_utils::Upper_lower<double> > ul;
+    swarm_utils::Upper_lower<double> bounds={-4.0, 4.0};
     ul.push_back(bounds);
     ul.push_back(bounds);
     ul.push_back(bounds);
@@ -233,8 +233,8 @@ TEST_CASE("Test Simple Function", "[Cuckoo]"){
     REQUIRE(std::get<swarm_utils::fnval>(results)==Approx(0.0));
 }  
 TEST_CASE("Test Rosenbrok Function", "[Cuckoo]"){
-    std::vector<swarm_utils::upper_lower<double> > ul;
-    swarm_utils::upper_lower<double> bounds={-4.0, 4.0};
+    std::vector<swarm_utils::Upper_lower<double> > ul;
+    swarm_utils::Upper_lower<double> bounds={-4.0, 4.0};
     ul.push_back(bounds);
     ul.push_back(bounds);
 
@@ -248,8 +248,8 @@ TEST_CASE("Test Rosenbrok Function", "[Cuckoo]"){
     //REQUIRE(params[1]==Approx(1.0));
 }  
 TEST_CASE("Test u^2 Function", "[Cuckoo]"){
-    std::vector<swarm_utils::upper_lower<double> > ul;
-    swarm_utils::upper_lower<double> bounds={-5.0, 5.0};
+    std::vector<swarm_utils::Upper_lower<double> > ul;
+    swarm_utils::Upper_lower<double> bounds={-5.0, 5.0};
     ul.push_back(bounds);
     ul.push_back(bounds);
     ul.push_back(bounds);
@@ -281,8 +281,8 @@ TEST_CASE("Test u^2 Function", "[Cuckoo]"){
 }  
 constexpr double rastigrinScale=10;
 TEST_CASE("Test Rastigrin Function", "[Cuckoo]"){
-    std::vector<swarm_utils::upper_lower<double> > ul;
-    swarm_utils::upper_lower<double> bounds={-4.0, 4.0};
+    std::vector<swarm_utils::Upper_lower<double> > ul;
+    swarm_utils::Upper_lower<double> bounds={-4.0, 4.0};
     ul.push_back(bounds);
     ul.push_back(bounds);
     ul.push_back(bounds);
