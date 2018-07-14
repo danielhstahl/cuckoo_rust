@@ -1,7 +1,15 @@
 [package]
 name = "cuckoo"
 version = "0.1.0"
-authors = ["danstahl1138@gmail.com"]
+authors = ["Daniel Stahl <danstahl1138@gmail.com>"]
+homepage = "https://github.com/phillyfan1138/cuckoo_rust"
+repository = "https://github.com/phillyfan1138/cuckoo_rust"
+readme = "README.md"
+license = "MIT"
 
 [dependencies]
 rand = "0.5"
+approx = "0.2.0"
+
+[badges]
+travis-ci = { repository = "phillyfan1138/cuckoo_rust" }
