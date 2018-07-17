@@ -1,4 +1,8 @@
 extern crate rand;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
+
 use rand::{thread_rng, ThreadRng, SeedableRng, Rng, StdRng};
 use rand::distributions::Uniform;
 use rand::distributions::StandardNormal;
@@ -10,6 +14,7 @@ extern crate approx;
 #[cfg(test)]
 use std::f64::consts::PI;
 
+#[derive(Serialize, Deserialize)]
 pub struct UpperLower {
     pub lower: f64,
     pub upper: f64,
