@@ -52,7 +52,7 @@ fn get_truncated_parameter(
 }
 
 fn get_random_parameters<T, U>(
-    ul:&Vec<UpperLower>,
+    ul:&[UpperLower],
     rng:&mut T,
     rand:&mut U
 )->Vec<f64>
@@ -64,13 +64,13 @@ fn get_random_parameters<T, U>(
 }
 
 fn get_new_parameter_and_fn<T, U, S>(
-    ul:&Vec<UpperLower>,
+    ul:&[UpperLower],
     obj_fn:S,
     rng:&mut T,
     rand:&mut U
 )->(Vec<f64>, f64) 
     where 
-        S:Fn(&Vec<f64>)->f64,
+        S:Fn(&[f64])->f64,
         T:Rng,
         U:Distribution<f64>
 {
@@ -85,14 +85,14 @@ fn get_step_size(curr:f64, best:f64, lower:f64, upper:f64)->f64{
 }
 
 fn get_new_nest<T, U, S>(
-    ul:&Vec<UpperLower>, 
+    ul:&[UpperLower], 
     obj_fn:S,
     n:usize,
     rng:&mut T,
     rand:&mut U
 )->Vec<(Vec<f64>, f64)>
     where 
-        S: Fn(&Vec<f64>)->f64,
+        S: Fn(&[f64])->f64,
         T:Rng,
         U:Distribution<f64>
 {
@@ -106,7 +106,7 @@ fn sort_nest(
 }
 
 fn get_best_nest(
-    new_nest:&Vec<(Vec<f64>, f64)>,
+    new_nest:&[(Vec<f64>, f64)],
     curr_nest:&mut Vec<(Vec<f64>, f64)>//move curr_nest
 ){
     curr_nest.iter_mut().zip(new_nest.iter()).for_each(|(curr_val, new_val)|{
@@ -122,10 +122,10 @@ fn get_best_nest(
 
 fn get_cuckoos<T, G, U>(
     new_nest:&mut Vec<(Vec<f64>, f64)>, 
-    curr_nest:&Vec<(Vec<f64>, f64)>,
-    best_parameters:&Vec<f64>,
-    ul:&Vec<UpperLower>,
-    obj_fn:impl Fn(&Vec<f64>)->f64,
+    curr_nest:&[(Vec<f64>, f64)],
+    best_parameters:&[f64],
+    ul:&[UpperLower],
+    obj_fn:impl Fn(&[f64])->f64,
     lambda:f64,
     rng:&mut T,
     uniform:&mut U,
@@ -172,8 +172,8 @@ fn get_pa(
 
 fn empty_nests<T, U>(
     new_nest:&mut Vec<(Vec<f64>, f64)>, //
-    obj_fn:&impl Fn(&Vec<f64>)->f64,
-    ul:&Vec<UpperLower>,
+    obj_fn:&impl Fn(&[f64])->f64,
+    ul:&[UpperLower],
     p:f64,
     rng:&mut T,
     rand:&mut U
@@ -199,8 +199,8 @@ pub fn get_rng_system_seed()->ThreadRng{
 }
 
 pub fn optimize<T>(
-    obj_fn:&impl Fn(&Vec<f64>)->f64,
-    ul:&Vec<UpperLower>,
+    obj_fn:&impl Fn(&[f64])->f64,
+    ul:&[UpperLower],
     n:usize,
     total_mc:usize,
     tol:f64,
@@ -281,7 +281,7 @@ mod tests {
         ul.push(UpperLower{ lower:-4.0, upper:4.0});
         ul.push(UpperLower{ lower:-4.0, upper:4.0});
         ul.push(UpperLower{ lower:-4.0, upper:4.0});
-        let (result, fn_val)=optimize(&|inputs:&Vec<f64>|{
+        let (result, fn_val)=optimize(&|inputs:&[f64]|{
             inputs[0].powi(2)+inputs[1].powi(2)+inputs[2].powi(2)+inputs[3].powi(2)
         }, &ul, 25, 1000, 0.00000001, || get_rng_seed(seed));
         for res in result.iter(){
@@ -295,7 +295,7 @@ mod tests {
         let mut ul=vec![];
         ul.push(UpperLower{ lower:-4.0, upper:4.0});
         ul.push(UpperLower{ lower:-4.0, upper:4.0});
-        let (result, fn_val)=optimize(&|inputs:&Vec<f64>|{
+        let (result, fn_val)=optimize(&|inputs:&[f64]|{
             (1.0-inputs[0]).powi(2)+100.0*(inputs[1]-inputs[0].powi(2)).powi(2)
         }, &ul, 20, 10000, 0.00000001, || get_rng_seed(seed));
         for res in result.iter(){
@@ -323,7 +323,7 @@ mod tests {
         ul.push(UpperLower{ lower:-5.0, upper:5.0});
         ul.push(UpperLower{ lower:-5.0, upper:5.0});
         ul.push(UpperLower{ lower:-5.0, upper:5.0});
-        let (result, fn_val)=optimize(&|inputs:&Vec<f64>|{
+        let (result, fn_val)=optimize(&|inputs:&[f64]|{
             inputs.iter().fold(0.0, |accum, curr|accum+(curr-1.0).powi(2))
         }, &ul, 25, 25000, 0.00000001, || get_rng_seed(seed));
         for res in result.iter(){
@@ -341,7 +341,7 @@ mod tests {
         ul.push(UpperLower{ lower:-4.0, upper:4.0});
         ul.push(UpperLower{ lower:-4.0, upper:4.0});
         let rastigrin_scale=10.0;
-        let (result, fn_val)=optimize(&|inputs:&Vec<f64>|{
+        let (result, fn_val)=optimize(&|inputs:&[f64]|{
             rastigrin_scale*(inputs.len() as f64)+inputs.iter().fold(
                 0.0, |accum, curr|accum+curr.powi(2)-rastigrin_scale*(2.0*PI*curr).cos()
             )
