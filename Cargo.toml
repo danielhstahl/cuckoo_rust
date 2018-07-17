@@ -6,6 +6,7 @@ homepage = "https://github.com/phillyfan1138/cuckoo_rust"
 repository = "https://github.com/phillyfan1138/cuckoo_rust"
 readme = "README.md"
 license = "MIT"
+description = "Cuckoo search algorithm"
 
 [dependencies]
 rand = "0.5"
