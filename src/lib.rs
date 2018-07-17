@@ -11,8 +11,8 @@ extern crate approx;
 use std::f64::consts::PI;
 
 pub struct UpperLower {
-    lower: f64,
-    upper: f64,
+    pub lower: f64,
+    pub upper: f64,
 }
 
 fn get_levy(alpha:f64, uniform_rand:f64)->f64 {
