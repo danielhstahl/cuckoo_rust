@@ -1,29 +1,25 @@
 language: rust
-
 sudo: required
-
 rust:
-  - stable
-  - beta
-  - nightly
-
+- stable
+- beta
+- nightly
 matrix:
   allow_failures:
-    - rust: nightly
+  - rust: nightly
 env:
-  - secure: smQ1nBQ8pM12u6LWc+elM5bSyj4Hgd61h3HcStqtLF88KZBbGlqgZCxewfrWQg7eAk1SPTtiaqc6c6XpZEEWMTYqfa2tkBChnlnatJTwWCGaPjrpBxRyvDhQp/xzTbWfbCNMYtSrA6DnTu2TssBh7HGTt9nffFRRqlX4aBbDePWWxK/1V99fHNYN6kz1g2N/GVxawQ0naUDyzG3bIvQqi1S+ERHNS3gkJo4g7zaeJOhPOQeCfztrqWKC9Bmh8uzOQjumlPj5t0WIrFYYkQpHNZ+uy/uwuZbSopAehIjShrhT9zoFCJQTW4dSKVbJQleKc6QKhw03FNzUHQOLH5ztULttKrcXmVm0e/CetMruhkLwMaVZVoWu/UR2t+Om4LfGWMFnNtf98LkUTkFewzQ9EsU7mqEK9AoNSWhMtAV8BJtFOEdczkO67FDeAFJWf/fpPBjfFjtC49L0wNIH8+9JyEv1Np7FCMV/epO4PXu5na3rUkMYZQAc4mmwptNiHupnsyW4bN5sEwb/Z/Kgy7+sRU++/dISH3v8bs6sZp2z5hJ4tgu1YFmYJTiYy//KUTfSPo3HTx6+/qKE/c/AQDsRZqcIYNP2iSOkVpmVU1VpgLMG5XuC/crMlRacw7PPautXaQf9gmcOkEhgL5Jmku/fiCKM8MiNBKkpOWTtq4P8Cbc=
+  - secure: MPJBhwdaWtU4jHojjxjGYuosn9s4C4qKgbcHUouc2Nw1UW6Fk6Qtt27VxAnoB7XyKCnEQRHLyM6/oyDIu0xeRYxnoBms3VltmqYsJJ6htpoG1S9kgjUCagQqIwzTIecQGP0q3tFSa7Ua1wwMmYttkjIMr7kyQj6ifscvyXwmDmlCMRFvYtD8X4SC01F7LQS6BDN83+Y7YPptcztQH521y3DesvS2ps4ZbvGsLEO1Yc9P6pmzyTWZxAMtx8ksRzaWTXgQRljYr2hZwuM3mpEm2fXjdAvhx1NOHfusGbl4q2MGBLGEwn6RKPg6hDpHvAOahv+dHpijIgoKEIy/XpA/rb+lqwE6Ld2pNP7QU/c7+La9TvRPtMIkiootcw6+fSr4Qj5Jvqegc5P+qrdev8OAQ68h3PkJKWjnhEyScR8390OrD24jdRyaBAifxsfXdciLkTpg23PVWc5fUaZUMqe3Eagmtz58SbETbfWxOxD7MQpjn+jO4v4plmWBbOztMzLeJ1FQO6xKn8h9unPboPknOrhgCtEN0vIR0xTW5MDz84WFGMGJ6eKEOEMgX4YCNNH5C6vilpaLbDcvHcZVRJsFD5Jts6/5i9x0Q3nLMWpMaZrrkjfs06IkvxOZ/nt2TPVN4bDrbKK4bkLaRUV9ran58mBUknhBXQUDHVwZuVwcC30=
 addons:
   apt:
     packages:
-      - libcurl4-openssl-dev
-      - libelf-dev
-      - libdw-dev
-      - cmake
-      - gcc
-      - binutils-dev
-      - libiberty-dev
-
-after_success: |
+    - libcurl4-openssl-dev
+    - libelf-dev
+    - libdw-dev
+    - cmake
+    - gcc
+    - binutils-dev
+    - libiberty-dev
+after_success: |-
   wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
   tar xzf master.tar.gz &&
   cd kcov-master &&
