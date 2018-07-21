@@ -34,15 +34,6 @@ fn get_levy_flight(
     curr_val+step_size*get_levy(lambda, uniform_rand)*norm_rand
 }
 
-fn get_random_parameter(
-    lower:f64,
-    upper:f64,
-    uniform_rand:f64
-)->f64{
-    let half=0.5;
-    (upper+lower)*half+(upper-lower)*half*uniform_rand //reflects middle more likely than edges
-}
-
 fn get_truncated_parameter(
     lower:f64,
     upper:f64,
@@ -50,6 +41,17 @@ fn get_truncated_parameter(
 )->f64 {
     if result>upper {upper} else if result<lower {lower} else {result}
 }
+
+fn get_random_parameter(
+    lower:f64,
+    upper:f64,
+    rand:f64
+)->f64{
+    let half=0.5;
+    get_truncated_parameter(lower, upper, (upper+lower)*half+(upper-lower)*half*rand) //reflects middle more likely than edges
+}
+
+
 
 fn get_random_parameters<T, U>(
     ul:&[UpperLower],
@@ -79,7 +81,7 @@ fn get_new_parameter_and_fn<T, U, S>(
     (parameters, fn_value_at_parameters)
 }
 
-static STEP_INCREMENT:f64=0.01;
+const STEP_INCREMENT:f64=0.01;
 fn get_step_size(curr:f64, best:f64, lower:f64, upper:f64)->f64{
     STEP_INCREMENT*(upper-lower)*(curr-best)
 }
