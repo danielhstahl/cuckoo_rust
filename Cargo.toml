@@ -22,4 +22,5 @@ travis-ci = { repository = "phillyfan1138/cuckoo_rust" }
 
 [features]
 default = []
-VERBOSE_FLAG=[]
+VERBOSE_FLAG_ALL=[]
+VERBOSE_FLAG_SUMMARY=[]

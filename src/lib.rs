@@ -2,17 +2,14 @@ extern crate rand;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
+#[macro_use]
+#[cfg(test)]
+extern crate approx;
 
 use rand::{thread_rng, ThreadRng, SeedableRng, Rng, StdRng};
 use rand::distributions::Uniform;
 use rand::distributions::StandardNormal;
 use rand::distributions::{Distribution};
-
-#[macro_use]
-#[cfg(test)]
-extern crate approx;
-#[cfg(test)]
-use std::f64::consts::PI;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct UpperLower {
@@ -229,12 +226,14 @@ pub fn optimize<T>(
     loop {
         get_cuckoos(
             &mut new_nest, &curr_nest, 
-            &curr_nest.first().unwrap().0, //currently best parameters 
+            &curr_nest.first().unwrap().0, // best parameters 
             &ul, 
             &obj_fn, lambda, 
             &mut rng, &mut uniform, &mut normal
         );
+
         get_best_nest(&new_nest, &mut curr_nest);
+
         empty_nests(
             &mut curr_nest, 
             &obj_fn, &ul,
@@ -242,17 +241,25 @@ pub fn optimize<T>(
             &mut rng,
             &mut normal
         );
+
         sort_nest(&mut curr_nest);
         index=index+1;
         
-        if cfg!(feature="VERBOSE_FLAG") {
+        if cfg!(feature="VERBOSE_FLAG_ALL") {
             print!("Index: {}, Param Vals: ", index);
             for val in curr_nest[0].0.iter(){
-                print!("{}", val);
+                print!("{}, ", val);
             }
             println!("Objective Value: {}", curr_nest[0].1);
         }
         if index>=total_mc || curr_nest.first().unwrap().1<=tol {break;}
+    }
+    if cfg!(feature="VERBOSE_FLAG_SUMMARY") {
+        print!("Index: {}, Param Vals: ", index);
+        for val in curr_nest[0].0.iter(){
+            print!("{}, ", val);
+        }
+        println!("Objective Value: {}", curr_nest[0].1);
     }
     let (optim_parameters, optim_fn_val)=curr_nest.first().unwrap();
     (optim_parameters.to_vec(), *optim_fn_val)
@@ -261,6 +268,20 @@ pub fn optimize<T>(
 
 #[cfg(test)]
 mod tests {
+    
+    #[cfg(test)]
+    use std::f64::consts::PI;
+
+    #[cfg(test)]
+    struct DegenerateDistribution{
+        value:f64
+    }
+    #[cfg(test)]
+    impl Distribution<f64> for DegenerateDistribution {
+        fn sample<R: Rng + ?Sized>(&self, _rng: &mut R) -> f64 {
+            self.value
+        }
+    }
     use super::*;
     #[test]
     fn sort_algorithm(){
@@ -277,7 +298,7 @@ mod tests {
     }
     #[test]
     fn simple_fn_optim() {
-        let seed:[u8; 32]=[0; 32];
+        let seed:[u8; 32]=[2; 32];
         let mut ul=vec![];
         ul.push(UpperLower{ lower:-4.0, upper:4.0});
         ul.push(UpperLower{ lower:-4.0, upper:4.0});
@@ -293,7 +314,7 @@ mod tests {
     }
     #[test]
     fn test_rosenbrok_function(){
-        let seed:[u8; 32]=[0; 32];
+        let seed:[u8; 32]=[2; 32];
         let mut ul=vec![];
         ul.push(UpperLower{ lower:-4.0, upper:4.0});
         ul.push(UpperLower{ lower:-4.0, upper:4.0});
@@ -307,7 +328,7 @@ mod tests {
     }
     #[test]
     fn test_u_2_function(){ //16 parameters
-        let seed:[u8; 32]=[0; 32];
+        let seed:[u8; 32]=[2; 32];
         let mut ul=vec![];
         ul.push(UpperLower{ lower:-5.0, upper:5.0});
         ul.push(UpperLower{ lower:-5.0, upper:5.0});
@@ -335,7 +356,7 @@ mod tests {
     }
     #[test]
     fn test_rastigrin_function(){
-        let seed:[u8; 32]=[0; 32];
+        let seed:[u8; 32]=[2; 32];
         let mut ul=vec![];
         ul.push(UpperLower{ lower:-4.0, upper:4.0});
         ul.push(UpperLower{ lower:-4.0, upper:4.0});
@@ -353,6 +374,115 @@ mod tests {
         }
         assert_abs_diff_eq!(fn_val, 0.0, epsilon=0.00001);
     }
+    #[test]
+    fn test_get_levy(){
+        let alpha=1.5;
+        assert_abs_diff_eq!(get_levy(alpha, 0.5), 1.5874, epsilon=0.0001);
+    }
+    #[test]
+    fn test_get_levy_flight(){
+        let alpha=1.5;
+        let step_size=0.01;
+        let curr_val=0.5;
+        let unif_rand=0.2;
+        let norm_rand=-0.5;
+        assert_abs_diff_eq!(get_levy_flight(curr_val, step_size, alpha, unif_rand, norm_rand), 0.48538, epsilon=0.0001);
+    }
+    #[test]
+    fn test_get_random_parameter(){
+        let lower=-0.5;
+        let upper=0.5;
+        let rand=0.3;
+        assert_abs_diff_eq!(get_random_parameter(lower, upper, rand), 0.15, epsilon=0.0001);
+    }
+    #[test]
+    fn test_get_best_nest(){
+        let v1=vec![0.5, 0.6, 0.7];
+        let v2=vec![0.4, 0.5, 0.6];
+        let mut curr_nest=vec![(v1.clone(), 0.8), (v2.clone(), 0.7)];
+        let new_nest=vec![(v1, 0.9), (v2, 0.6)];
+        get_best_nest(&new_nest, &mut curr_nest);
 
+        assert_eq!(curr_nest[0].1, 0.6);
+        assert_eq!(curr_nest[1].1, 0.8);
+        assert_eq!(curr_nest[0].0[0], 0.4);
+        assert_eq!(curr_nest[0].0[1], 0.5);
+        assert_eq!(curr_nest[0].0[2], 0.6);
+        assert_eq!(curr_nest[1].0[0], 0.5);
+        assert_eq!(curr_nest[1].0[1], 0.6);
+        assert_eq!(curr_nest[1].0[2], 0.7);
+    }
+    #[test]
+    fn test_get_cuckoos(){
+        let v1=vec![0.5, 0.6, 0.7];
+        let v2=vec![0.4, 0.5, 0.6];
+        let curr_nest=vec![(v1.clone(), 0.8), (v2.clone(), 0.7)];
+        let mut new_nest=vec![(v1, 0.9), (v2, 0.6)];
+        let best_parameters=vec![0.4, 0.7, 0.5];
+        let ul=vec![
+            UpperLower{lower:-4.0, upper:4.0}, 
+            UpperLower{lower:-4.0, upper:4.0}, 
+            UpperLower{lower:-4.0, upper:4.0}
+        ];
+
+        let mut normal=DegenerateDistribution{value:0.5};
+        let mut uniform=DegenerateDistribution{value:0.5};
+        let mut rng=get_rng_system_seed();
+        get_cuckoos(
+            &mut new_nest, &curr_nest,
+            &best_parameters, &ul, 
+            |v|v[0]+v[1]+v[2], 1.5, 
+            &mut rng, 
+            &mut uniform, &mut normal);
+        
+        assert_abs_diff_eq!(new_nest[0].1, 1.8127, epsilon=0.0001);
+        assert_abs_diff_eq!(new_nest[1].1, 1.49365, epsilon=0.0001);
+        assert_abs_diff_eq!(new_nest[0].0[0], 0.50635, epsilon=0.0001);
+        assert_abs_diff_eq!(new_nest[0].0[1], 0.59365, epsilon=0.0001);
+        assert_abs_diff_eq!(new_nest[0].0[2], 0.712699, epsilon=0.0001);
+        assert_abs_diff_eq!(new_nest[1].0[0], 0.4, epsilon=0.0001);
+        assert_abs_diff_eq!(new_nest[1].0[1], 0.487301, epsilon=0.0001);
+        assert_abs_diff_eq!(new_nest[1].0[2], 0.60635, epsilon=0.0001);
+    }
+
+    #[test]
+    fn test_get_pa(){
+        let p_min=0.05;
+        let p_max=0.5;
+        let index:usize=50;
+        let n:usize=1000;
+        assert_abs_diff_eq!(
+            get_pa(p_min, p_max, index,n), 
+            0.4775, epsilon=0.0001);
+    }
+    #[test]
+    fn test_empty_nests(){
+        let v1=vec![0.5, 0.6, 0.7];
+        let v2=vec![0.4, 0.5, 0.6];
+        let mut new_nest=vec![(v1.clone(), 0.8), (v2.clone(), 0.7)];
+        let ul=vec![
+            UpperLower{lower:-4.0, upper:4.0}, 
+            UpperLower{lower:-4.0, upper:4.0}, 
+            UpperLower{lower:-4.0, upper:4.0}
+        ];
+        let mut normal=DegenerateDistribution{value:0.5};
+        let mut rng=get_rng_system_seed();
+        let obj_fn=|v:&[f64]|v[0]+v[1]+v[2];
+        empty_nests(
+            &mut new_nest, 
+            &obj_fn,
+            &ul, 0.4, &mut rng, &mut normal);
+
+
+        assert_eq!(new_nest[0].1, 0.8);
+        assert_eq!(new_nest[1].1, 0.7);
+        assert_eq!(new_nest[0].0[0], 0.5);
+        assert_eq!(new_nest[0].0[1], 0.6);
+        assert_eq!(new_nest[0].0[2], 0.7);
+        assert_eq!(new_nest[1].0[0], 0.4);
+        assert_eq!(new_nest[1].0[1], 0.5);
+        assert_eq!(new_nest[1].0[2], 0.6);
+
+    }
 
 }
