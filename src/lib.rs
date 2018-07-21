@@ -14,7 +14,7 @@ extern crate approx;
 #[cfg(test)]
 use std::f64::consts::PI;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct UpperLower {
     pub lower: f64,
     pub upper: f64,
