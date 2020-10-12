@@ -201,6 +201,19 @@ pub fn get_rng_system_seed() -> ThreadRng {
     thread_rng()
 }
 
+#[derive(Debug)]
+pub struct IndexError(String);
+
+impl std::fmt::Display for IndexError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Index error: {}", self.0)
+    }
+}
+impl std::error::Error for IndexError {}
+fn get_first(nest: &[(Vec<f64>, f64)]) -> Result<&(Vec<f64>, f64), IndexError> {
+    let first = nest.first();
+    first.ok_or(IndexError(String::from("No elements")))
+}
 pub fn optimize<T>(
     obj_fn: &impl Fn(&[f64]) -> f64,
     ul: &[UpperLower],
@@ -208,7 +221,7 @@ pub fn optimize<T>(
     total_mc: usize,
     tol: f64,
     rng_inst: impl Fn() -> T,
-) -> (Vec<f64>, f64)
+) -> Result<(Vec<f64>, f64), IndexError>
 where
     T: Rng,
 {
@@ -228,10 +241,11 @@ where
 
     let mut index = 0;
     loop {
+        let best_parameters = &get_first(&curr_nest)?.0;
         get_cuckoos(
             &mut new_nest,
             &curr_nest,
-            &curr_nest.first().unwrap().0, // best parameters
+            &best_parameters, // best parameters
             &ul,
             &obj_fn,
             lambda,
@@ -261,7 +275,8 @@ where
             }
             println!("Objective Value: {}", curr_nest[0].1);
         }
-        if index >= total_mc || curr_nest.first().unwrap().1 <= tol {
+        let best_value = get_first(&curr_nest)?.1;
+        if index >= total_mc || best_value <= tol {
             break;
         }
     }
@@ -272,8 +287,8 @@ where
         }
         println!("Objective Value: {}", curr_nest[0].1);
     }
-    let (optim_parameters, optim_fn_val) = curr_nest.first().unwrap();
-    (optim_parameters.to_vec(), *optim_fn_val)
+    let (optim_parameters, optim_fn_val) = get_first(&curr_nest)?;
+    Ok((optim_parameters.to_vec(), *optim_fn_val))
 }
 
 #[cfg(test)]
@@ -334,7 +349,8 @@ mod tests {
             1000,
             0.00000001,
             || get_rng_seed(seed),
-        );
+        )
+        .unwrap();
         for res in result.iter() {
             assert_abs_diff_eq!(*res, 0.0, epsilon = 0.001);
         }
@@ -361,7 +377,8 @@ mod tests {
             10000,
             0.00000001,
             || get_rng_seed(seed),
-        );
+        )
+        .unwrap();
         for res in result.iter() {
             assert_abs_diff_eq!(*res, 1.0, epsilon = 0.001);
         }
@@ -447,7 +464,8 @@ mod tests {
             25000,
             0.00000001,
             || get_rng_seed(seed),
-        );
+        )
+        .unwrap();
         for res in result.iter() {
             assert_abs_diff_eq!(*res, 1.0, epsilon = 0.001);
         }
@@ -490,7 +508,8 @@ mod tests {
             25000,
             0.00000001,
             || get_rng_seed(seed),
-        );
+        )
+        .unwrap();
         for res in result.iter() {
             assert_abs_diff_eq!(*res, 0.0, epsilon = 0.001);
         }
