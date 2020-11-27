@@ -2,10 +2,10 @@
 | :---------------: | :-------------------: |
 | ![lin-badge]      | ![cov-badge]          |
 
-[lin-badge]: https://github.com/phillyfan1138/cuckoo_rust/workflows/Rust/badge.svg
-[lin-link]:  https://github.com/phillyfan1138/cuckoo_rust/actions
-[cov-badge]: https://codecov.io/gh/phillyfan1138/cuckoo_rust/branch/master/graph/badge.svg
-[cov-link]:  https://codecov.io/gh/phillyfan1138/cuckoo_rust
+[lin-badge]: https://github.com/danielhstahl/cuckoo_rust/workflows/Rust/badge.svg
+[lin-link]:  https://github.com/danielhstahl/cuckoo_rust/actions
+[cov-badge]: https://codecov.io/gh/danielhstahl/cuckoo_rust/branch/master/graph/badge.svg
+[cov-link]:  https://codecov.io/gh/danielhstahl/cuckoo_rust
 
 ## Cuckoo
 
